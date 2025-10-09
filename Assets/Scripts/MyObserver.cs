@@ -44,6 +44,7 @@ public class MyObserver : MonoBehaviour
         if (request.result == UnityWebRequest.Result.Success)
         {
             Debug.Log("Data sent successfully: " + request.downloadHandler.text);
+            CallbackEvents.OnAddPlayerCallback?.Invoke(42);
         }
         else
         {
