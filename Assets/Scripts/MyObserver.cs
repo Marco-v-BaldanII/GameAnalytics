@@ -137,8 +137,8 @@ public class MyObserver : MonoBehaviour
         {
             Debug.Log("Session uploaded completed UwU Teehee! <3");
             Debug.Log(www.downloadHandler.text); // Muestra la respuesta del servidor
-            uint purchase_id = uint.Parse(www.downloadHandler.text); // recupera el session id del echo del servidor
-            CallbackEvents.OnItemBuyCallback?.Invoke(purchase_id);
+            uint session_id = uint.Parse(www.downloadHandler.text); // recupera el session id del echo del servidor
+            CallbackEvents.OnItemBuyCallback?.Invoke(session_id); // TODO: here it wants session ID
         }
     }
 
