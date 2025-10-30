@@ -55,23 +55,22 @@ public class MyObserver : MonoBehaviour
             CallbackEvents.OnAddPlayerCallback?.Invoke(player_id);
         }
     }
-    SessionData sessionData;
-
+    StartSessionData sessionData;
 
     public void OnNewSession(DateTime _date, uint playerId)
     {
-        sessionData = new SessionData();
+        sessionData = new StartSessionData();
         sessionData.date = _date.ToString("yyyy-MM-dd HH:mm:ss");
         sessionData.UID = (int)playerId;
-        sessionData.endDate = _date.ToString("yyyy-MM-dd HH:mm:ss"); // TODO send this onEnd session event
         string json = JsonUtility.ToJson(sessionData);
         StartCoroutine(UploadSession(json));
     }
 
-    IEnumerator UploadSession(string json)
+    IEnumerator UploadSession(string json, string action = "insert" )
     {
         WWWForm form = new WWWForm();
         form.AddField("SessionData", json);
+        form.AddField("action", action);
 
         UnityWebRequest www = UnityWebRequest.Post("https://citmalumnes.upc.es/~marcobp1/player.php", form);
         yield return www.SendWebRequest();
@@ -84,38 +83,35 @@ public class MyObserver : MonoBehaviour
         {
             Debug.Log("Session uploaded completed UwU Teehee! <3");
             Debug.Log(www.downloadHandler.text); // Muestra la respuesta del servidor
-            uint session_id = uint.Parse(www.downloadHandler.text); // recupera el session id del echo del servidor
-            CallbackEvents.OnNewSessionCallback?.Invoke(session_id);
+
+            if (action == "insert")
+            {
+                uint session_id = uint.Parse(www.downloadHandler.text); // recupera el session id del echo del servidor
+
+                
+                CallbackEvents.OnNewSessionCallback?.Invoke(session_id);
+            }
+            else if (action == "update")
+            {
+                // TODO in this Invoke pass the player id, you can either store it globally or echo it from the php
+                uint player_id = uint.Parse(www.downloadHandler.text); // recupera el player id del echo del servidor
+                CallbackEvents.OnEndSessionCallback?.Invoke(player_id);
+            }
         }
     }
 
     void OnEndSession (DateTime _date, uint sessionId)
     {
-        sessionData.endDate = _date.ToString("yyyy-MM-dd HH:mm:ss");
-        string json = JsonUtility.ToJson(sessionData);
-        //StartCoroutine(UpdateSessionEnd(json));
+        EndSessionData end_data = new EndSessionData();
+
+        end_data.endDate = _date.ToString("yyyy-MM-dd HH:mm:ss");
+        end_data.sessionId = (int)sessionId;
+
+        string json = JsonUtility.ToJson(end_data);
+        StartCoroutine (UploadSession(json , "update"));
     }
 
-    IEnumerator UpdateSessionEnd(string json)
-    {
-        WWWForm form = new WWWForm();
 
-        form.AddField("SessionData", json);
-        UnityWebRequest www = UnityWebRequest.Post("https://citmalumnes.upc.es/~marcobp1/player.php", form);
-        yield return www.SendWebRequest();
-
-        if (www.result != UnityWebRequest.Result.Success)
-        {
-            Debug.LogError(www.error);
-        }
-        else
-        {
-            Debug.Log("Session uploaded completed UwU Teehee! <3");
-            Debug.Log(www.downloadHandler.text); // Muestra la respuesta del servidor
-            uint purchase_id = uint.Parse(www.downloadHandler.text); // recupera el session id del echo del servidor
-            CallbackEvents.OnItemBuyCallback?.Invoke(purchase_id);
-        }
-    }
 
     void OnNewPurchase(int item_id, DateTime purchase_date, uint session_id)
     {
@@ -159,12 +155,17 @@ public class PlayerData
 }
 
 [Serializable]
-public class SessionData
+public class StartSessionData
+{
+    public int UID;
+
+    public string date;
+}
+
+[Serializable]
+public class EndSessionData
 {
     public int sessionId;
-    public int UID;
-    // TODO : change date to DateTime type , C# serializes it differently than how MySQL excpoects it so we must ensure the format change
-    public string date;
     public string endDate;
 }
 
