@@ -1,13 +1,12 @@
 using System;
 using System.Collections;
+using static UnityEditor.Experimental.AssetDatabaseExperimental.AssetDatabaseCounters;
 using UnityEngine;
 using UnityEngine.Analytics;
 using UnityEngine.Networking;
-using static UnityEditor.Experimental.AssetDatabaseExperimental.AssetDatabaseCounters;
 
 public class MyObserver : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
         Simulator.OnNewPlayer += OnNewPlayer;
@@ -18,19 +17,17 @@ public class MyObserver : MonoBehaviour
 
     void OnNewPlayer(string name, string country, int age, float gender, DateTime date)
     {
-        // Convert to JSON object
         PlayerData playerData = new PlayerData
         {
             name = name,
             country = country,
             age = age,
             gender = gender,
-            date = date.ToString("o") // ISO 8601 format
+            date = date.ToString("o")
         };
 
         string json = JsonUtility.ToJson(playerData);
 
-        // Send to server
         StartCoroutine(UploadPlayerData(json));
     }
 
@@ -49,7 +46,7 @@ public class MyObserver : MonoBehaviour
         else
         {
             Debug.Log("Form uploaded completed UwU Teehee! <3");
-            Debug.Log(www.downloadHandler.text); // Muestra la respuesta del servidor
+            Debug.Log(www.downloadHandler.text);
             var a = www.downloadHandler.text;
             uint player_id = uint.Parse(www.downloadHandler.text);
             CallbackEvents.OnAddPlayerCallback?.Invoke(player_id);
@@ -66,7 +63,7 @@ public class MyObserver : MonoBehaviour
         StartCoroutine(UploadSession(json));
     }
 
-    IEnumerator UploadSession(string json, string action = "insert" )
+    IEnumerator UploadSession(string json, string action = "insert")
     {
         WWWForm form = new WWWForm();
         form.AddField("SessionData", json);
@@ -75,6 +72,7 @@ public class MyObserver : MonoBehaviour
         UnityWebRequest www = UnityWebRequest.Post("https://citmalumnes.upc.es/~marcobp1/player.php", form);
         yield return www.SendWebRequest();
 
+
         if (www.result != UnityWebRequest.Result.Success)
         {
             Debug.LogError(www.error);
@@ -82,25 +80,22 @@ public class MyObserver : MonoBehaviour
         else
         {
             Debug.Log("Session uploaded completed UwU Teehee! <3");
-            Debug.Log(www.downloadHandler.text); // Muestra la respuesta del servidor
+            Debug.Log(www.downloadHandler.text);
 
             if (action == "insert")
             {
-                uint session_id = uint.Parse(www.downloadHandler.text); // recupera el session id del echo del servidor
-
-                
+                uint session_id = uint.Parse(www.downloadHandler.text);
                 CallbackEvents.OnNewSessionCallback?.Invoke(session_id);
             }
             else if (action == "update")
             {
-                // TODO in this Invoke pass the player id, you can either store it globally or echo it from the php
-                uint player_id = uint.Parse(www.downloadHandler.text); // recupera el player id del echo del servidor
+                uint player_id = uint.Parse(www.downloadHandler.text);
                 CallbackEvents.OnEndSessionCallback?.Invoke(player_id);
             }
         }
     }
 
-    void OnEndSession (DateTime _date, uint sessionId)
+    void OnEndSession(DateTime _date, uint sessionId)
     {
         EndSessionData end_data = new EndSessionData();
 
@@ -108,7 +103,7 @@ public class MyObserver : MonoBehaviour
         end_data.sessionId = (int)sessionId;
 
         string json = JsonUtility.ToJson(end_data);
-        StartCoroutine (UploadSession(json , "update"));
+        StartCoroutine(UploadSession(json, "update"));
     }
 
 
@@ -136,9 +131,9 @@ public class MyObserver : MonoBehaviour
         else
         {
             Debug.Log("Session uploaded completed UwU Teehee! <3");
-            Debug.Log(www.downloadHandler.text); // Muestra la respuesta del servidor
-            uint session_id = uint.Parse(www.downloadHandler.text); // recupera el session id del echo del servidor
-            CallbackEvents.OnItemBuyCallback?.Invoke(session_id); // TODO: here it wants session ID
+            Debug.Log(www.downloadHandler.text);
+            uint session_id = uint.Parse(www.downloadHandler.text);
+            CallbackEvents.OnItemBuyCallback?.Invoke(session_id);
         }
     }
 
@@ -174,7 +169,7 @@ public class PurchaseData
 {
     public PurchaseData(int item_id, string purchase_date, int session_id)
     {
-        this.item_id = item_id;this.purchase_date = purchase_date;this.session_id = session_id;
+        this.item_id = item_id; this.purchase_date = purchase_date; this.session_id = session_id;
     }
     public string purchase_date;
     public int session_id;
